@@ -162,7 +162,7 @@ def shared_info(slpk,layer,node):
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
 		abort(404, "Can't found SLPK: %s"%slpk)
 	try:
-		Sharedressource=json.loads(read("nodes/%s/Shared/sharedResource.json.gz"%node,slpk))
+		Sharedressource=json.loads(read("nodes/%s/shared/sharedResource.json.gz"%node,slpk))
 		response.content_type = 'application/json'
 		return json.dumps(FeatureData)
 	except:
