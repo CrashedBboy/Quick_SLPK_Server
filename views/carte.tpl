@@ -21,9 +21,10 @@
       "esri/Map",
       "esri/views/SceneView",
       "esri/layers/SceneLayer",
+	  "esri/widgets/DirectLineMeasurement3D",
 
       "dojo/domReady!"
-    ], function(Map, SceneView, SceneLayer) {
+    ], function(Map, SceneView, SceneLayer, DirectLineMeasurement3D) {
 
       // Create Map
       var map = new Map({
@@ -49,7 +50,12 @@
 	  view.goTo(layer.fullExtent);
 	});
 	
-	
+	//3d measure
+      // initialize widget
+      var measureWidget = new DirectLineMeasurement3D({
+        view: view
+      });
+      view.ui.add(measureWidget, "top-right");
     });
   </script>
 </head>
