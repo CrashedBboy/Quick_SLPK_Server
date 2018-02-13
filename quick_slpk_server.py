@@ -164,7 +164,7 @@ def shared_info(slpk,layer,node):
 	try:
 		Sharedressource=json.loads(read("nodes/%s/shared/sharedResource.json.gz"%node,slpk))
 		response.content_type = 'application/json'
-		return json.dumps(FeatureData)
+		return json.dumps(Sharedressource)
 	except:
 		return ""
 
