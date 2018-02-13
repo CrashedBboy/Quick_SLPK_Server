@@ -38,12 +38,18 @@
       });
 
       // Create SceneLayer and add to the map
-      var sceneLayer = new SceneLayer({
+      var layer = new SceneLayer({
         url:"{{url}}",
         popupEnabled: true
       });
-      map.add(sceneLayer);
-
+      map.add(layer);
+	  
+	  // Automatic zoom to layer extent
+	layer.when(function(){
+	  view.goTo(layer.fullExtent);
+	});
+	
+	
     });
   </script>
 </head>
