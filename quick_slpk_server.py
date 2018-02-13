@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env python
+#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -37,7 +37,7 @@ Licence: GNU GPLv3
 """
 
 # Import python modules
-from bottlepy.bottle import route, run, template, abort, response
+from bottlepy.bottle import app, route, run, template, abort, response
 from io import BytesIO
 import os, sys, json, gzip, zipfile
 
@@ -47,9 +47,9 @@ port=8080
 home=os.path.join(os.path.dirname(os.path.realpath(__file__)),"slpk") #SLPK Folder
 
 
-#******#
-#Script#
-#******#
+#*********#
+#Functions#
+#*********#
 
 #List available SLPK
 slpks=[f for f in os.listdir(home) if os.path.splitext(f)[1].lower()==u".slpk"]
@@ -67,13 +67,20 @@ def read(f,slpk):
 			else:
 				return zip.read(f.replace("\\","/")) #Direct read
 
-@route('/')
+#*********#
+#SRIPT****#
+#*********#
+			
+app = app()
+
+
+@app.route('/')
 def list_services():
 	""" List all available SLPK, with LINK to I3S service and Viewer page"""
 	return template('services_list', slpks=slpks)
 	
-@route('/<slpk>/SceneServer')
-@route('/<slpk>/SceneServer/')
+@app.route('/<slpk>/SceneServer')
+@app.route('/<slpk>/SceneServer/')
 def service_info(slpk):
 	""" Service information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -88,8 +95,8 @@ def service_info(slpk):
 	response.content_type = 'application/json'
 	return json.dumps(SceneServiceInfo)
 	
-@route('/<slpk>/SceneServer/layers/0')
-@route('/<slpk>/SceneServer/layers/0/')
+@app.route('/<slpk>/SceneServer/layers/0')
+@app.route('/<slpk>/SceneServer/layers/0/')
 def layer_info(slpk):
 	""" Layer information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -98,8 +105,8 @@ def layer_info(slpk):
 	response.content_type = 'application/json'
 	return json.dumps(SceneLayerInfo)
 
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>')
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/')
 def node_info(slpk,layer,node):
 	""" Node information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -108,16 +115,16 @@ def node_info(slpk,layer,node):
 	response.content_type = 'application/json'
 	return json.dumps(NodeIndexDocument)
 
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/geometries/0')
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/geometries/0/')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/geometries/0')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/geometries/0/')
 def geometry_info(slpk,layer,node):
 	""" Geometry information bin """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
 		abort(404, "Can't found SLPK: %s"%slpk)
 	return read("nodes/%s/geometries/0.bin.gz"%node,slpk)
 
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0')
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0/')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0/')
 def textures_info(slpk,layer,node):
 	""" Texture information JPG """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -127,8 +134,8 @@ def textures_info(slpk,layer,node):
 	except:
 		return ""
 
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0_1')
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0_1/')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0_1')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0_1/')
 def Ctextures_info(slpk,layer,node):
 	""" Compressed texture information """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -138,8 +145,8 @@ def Ctextures_info(slpk,layer,node):
 	except:
 		return ""
 
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/features/0')
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/features/0/')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/features/0')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/features/0/')
 def feature_info(slpk,layer,node):
 	""" Feature information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -148,8 +155,8 @@ def feature_info(slpk,layer,node):
 	response.content_type = 'application/json'
 	return json.dumps(FeatureData)
 
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/Shared')
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/Shared/')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/shared')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/shared/')
 def shared_info(slpk,layer,node):
 	""" Shared node information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -161,15 +168,15 @@ def shared_info(slpk,layer,node):
 	except:
 		return ""
 
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/attributes/<attribute>/0')
-@route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/attributes/<attribute>/0/')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/attributes/<attribute>/0')
+@app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/attributes/<attribute>/0/')
 def attribute_info(slpk,layer,node,attribute):
 	""" Attribute information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
 		abort(404, "Can't found SLPK: %s"%slpk)
 	return read("nodes/%s/attributes/%s/0.bin.gz"%(node,attribute),slpk)
 
-@route('/carte/<slpk>')
+@app.route('/carte/<slpk>')
 def carte(slpk):
 	""" Preview data on a 3d globe """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -177,4 +184,4 @@ def carte(slpk):
 	return template('carte', slpk=slpk, url="http://%s:%s/%s/SceneServer/layers/0"%(host,port,slpk))
 
 #Run server
-run(host=host, port=port)
+app.run(host=host, port=port)
