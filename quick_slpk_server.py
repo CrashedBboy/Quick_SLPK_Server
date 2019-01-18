@@ -37,6 +37,7 @@ Licence: GNU GPLv3
 """
 
 # Import python modules
+import bottlepy.bottle as bottle
 from bottlepy.bottle import app, route, run, template, abort, response
 from io import BytesIO
 import os, sys, json, gzip, zipfile
@@ -67,6 +68,20 @@ def read(f,slpk):
 			else:
 				return zip.read(f.replace("\\","/")) #Direct read
 
+# the decorator
+def enable_cors(fn):
+    def _enable_cors(*args, **kwargs):
+        # set CORS headers
+        response.headers['Access-Control-Allow-Origin'] = '*'
+        response.headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, OPTIONS'
+        response.headers['Access-Control-Allow-Headers'] = 'Origin, Accept, Content-Type, X-Requested-With, X-CSRF-Token'
+
+        if bottle.request.method != 'OPTIONS':
+            # actual request; reply with the actual response
+            return fn(*args, **kwargs)
+
+    return _enable_cors
+
 #*********#
 #SRIPT****#
 #*********#
@@ -81,6 +96,7 @@ def list_services():
 	
 @app.route('/<slpk>/SceneServer')
 @app.route('/<slpk>/SceneServer/')
+@enable_cors
 def service_info(slpk):
 	""" Service information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -97,6 +113,7 @@ def service_info(slpk):
 	
 @app.route('/<slpk>/SceneServer/layers/0')
 @app.route('/<slpk>/SceneServer/layers/0/')
+@enable_cors
 def layer_info(slpk):
 	""" Layer information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -107,6 +124,7 @@ def layer_info(slpk):
 
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>')
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/')
+@enable_cors
 def node_info(slpk,layer,node):
 	""" Node information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -117,25 +135,36 @@ def node_info(slpk,layer,node):
 
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/geometries/0')
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/geometries/0/')
+@enable_cors
 def geometry_info(slpk,layer,node):
 	""" Geometry information bin """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
 		abort(404, "Can't found SLPK: %s"%slpk)
+	response.content_type = 'application/octet-stream; charset=binary'
+	response.content_encoding = 'gzip'
 	return read("nodes/%s/geometries/0.bin.gz"%node,slpk)
 
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0')
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0/')
+@enable_cors
 def textures_info(slpk,layer,node):
 	""" Texture information JPG """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
 		abort(404, "Can't found SLPK: %s"%slpk)
+
+	response.headers['Content-Disposition'] = 'attachment; filename="0_0.jpg"'
+	response.content_type = 'image/jpeg'
 	try:
 		return read("nodes/%s/textures/0_0.jpg"%node,slpk)
 	except:
-		return ""
+		try:
+			return read("nodes/%s/textures/0_0.bin"%node,slpk)
+		except: 
+			return ""
 
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0_1')
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/textures/0_0_1/')
+@enable_cors
 def Ctextures_info(slpk,layer,node):
 	""" Compressed texture information """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -147,16 +176,19 @@ def Ctextures_info(slpk,layer,node):
 
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/features/0')
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/features/0/')
+@enable_cors
 def feature_info(slpk,layer,node):
 	""" Feature information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
 		abort(404, "Can't found SLPK: %s"%slpk)
+	print("%s")
 	FeatureData=json.loads(read("nodes/%s/features/0.json.gz"%node,slpk))
 	response.content_type = 'application/json'
 	return json.dumps(FeatureData)
 
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/shared')
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/shared/')
+@enable_cors
 def shared_info(slpk,layer,node):
 	""" Shared node information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -170,6 +202,7 @@ def shared_info(slpk,layer,node):
 
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/attributes/<attribute>/0')
 @app.route('/<slpk>/SceneServer/layers/<layer>/nodes/<node>/attributes/<attribute>/0/')
+@enable_cors
 def attribute_info(slpk,layer,node,attribute):
 	""" Attribute information JSON """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
@@ -177,6 +210,7 @@ def attribute_info(slpk,layer,node,attribute):
 	return read("nodes/%s/attributes/%s/0.bin.gz"%(node,attribute),slpk)
 
 @app.route('/carte/<slpk>')
+@enable_cors
 def carte(slpk):
 	""" Preview data on a 3d globe """
 	if slpk not in slpks: #Get 404 if slpk doesn't exists
